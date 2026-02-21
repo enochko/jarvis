@@ -1,0 +1,27 @@
+# Logs
+*.log
+.claude-logs/
+jarvis-logs/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Credentials (never commit these)
+*.key
+*.pem
+token.json
+credentials.json
+client_secret*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# macOS
+.DS_Store
