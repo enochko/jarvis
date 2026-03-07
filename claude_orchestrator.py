@@ -59,11 +59,13 @@ DEFAULT_ALLOWED_TOOLS = None  # populated from YAML frontmatter
 
 MODELS = {
     "opus":    "claude-opus-4-6",
-    "sonnet":  "claude-sonnet-4-5-20250929",
+    "sonnet":  "claude-sonnet-4-6",
     "haiku":   "claude-haiku-4-5",
     "claude-opus-4-6":              "claude-opus-4-6",
-    "claude-sonnet-4-5-20250929":   "claude-sonnet-4-5-20250929",
+    "claude-sonnet-4-6":            "claude-sonnet-4-6",
     "claude-haiku-4-5":             "claude-haiku-4-5",
+    # Legacy alias — redirects old task files using 4.5 string
+    "claude-sonnet-4-5-20250929":   "claude-sonnet-4-6",
     "opusplan": "opusplan",
 }
 
