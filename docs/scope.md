@@ -149,7 +149,7 @@ Provider selection by use case:
 | Write protection | `--allowedTools` restricting writes to safe dirs |
 | Response | Stdout captured, chunked if >4096 chars |
 | Daemon | `launchd` plist on macOS (auto-start on boot) |
-| Logging | All conversations to `~/Obsidian/# Claude/jarvis-logs/` |
+| Logging | All conversations to `~/Obsidian/aaa-claude/jarvis-logs/` |
 | `/usage` command | Query Claude quota via undocumented OAuth API or ccusage |
 
 **Starting point:** Fork `seedprod/claude-code-telegram` (MIT licensed).
@@ -184,7 +184,7 @@ conversation summaries), not your whole vault. Full vault search is Phase 4
 
 File structure:
 ```
-~/Obsidian/# Claude/
+~/Obsidian/aaa-claude/
 ├── jarvis-memory/
 │   ├── facts.md                # Persistent facts (/remember commands)
 │   ├── 2026-02-18_session1.md  # Conversation logs
@@ -711,7 +711,7 @@ subscription already and want multi-provider redundancy.
 
 ### Spike 2: Memory + Obsidian (1 weekend)
 
-- [ ] Create `~/Obsidian/# Claude/jarvis-memory/` directory
+- [ ] Create `~/Obsidian/aaa-claude/jarvis-memory/` directory
 - [ ] Create `facts.md` for persistent facts
 - [ ] Implement conversation logging (session → markdown)
 - [ ] Implement context injection (facts + recent history → prompt prefix)
@@ -771,58 +771,6 @@ subscription already and want multi-provider redundancy.
 
 ## Ideas Backlog
 
-Ideas captured during scoping. Not committed to any phase. Revisit after
-core spikes are complete.
-
-### Local Document Collections (Phase 4B candidate)
-
-Multiple document collections outside Obsidian that could benefit from
-LlamaIndex RAG indexing. All contain sensitive content — **local-only
-processing required** (Ollama embeddings, FAISS vector store, no cloud).
-
-| Collection | Size | Contents | Query examples |
-|-----------|------|----------|---------------|
-| Document archive | [large] | Receipts, warranties, official docs, academic transcripts, financial statements | "What warranty do I have for [item]?", "When was my last service?" |
-| Car | ? | Service records, rego, insurance | "When is my rego due?", "What was the last service mileage?" |
-| Career | ? | CV, job applications, contracts, salary surveys | "What was my salary at X?", "Find my employment contract" |
-| Finance | ? | Bank/credit card statements, estate plan | "What did I spend on dining in January?", "Find estate plan docs" |
-| University | ? | Subject materials, admin, course planner | "Find [course] assignment 3", "What subjects am I enrolled in next sem?" |
-
-**Architecture:** Same LlamaIndex infrastructure as Obsidian (Phase 4A),
-just pointed at different directories with stricter privacy. Parse PDFs
-locally (pymupdf/pdfplumber), embed with Ollama, store in FAISS. Query
-via Ollama for fully local pipeline, or send only extracted text chunks
-(not raw PDFs) to Claude.
-
-**Receipt → daily notes idea:** Parse receipts locally (OCR → extract date,
-vendor, amount), store as structured data, inject summary lines into
-auto-generated daily notes. Enriches Phase 5 daily notes with spending
-activity. Only the summary text (not the receipt) would touch Claude.
-
-**Initial text extraction for 47GB+ of PDFs:** Overnight batch job via
-orchestrator. Hours for first pass, then incremental.
-
-### Media Collection Browser (Mac Mini)
-
-Index movies & TV shows on Mac Mini, serve a local browsable interface for household members.
-
-**Before building:** Check if an existing solution handles this:
-- **Plex** — the standard answer. Auto-indexes, metadata, posters, multi-device streaming, watch history. Free tier is generous.
-- **Jellyfin** — open-source Plex alternative. No account required.
-- **Emby** — another alternative.
-
-**Where Jarvis could add value on top of Plex/Jellyfin:**
-- "What should we watch tonight?" (mood-based recommendations from your collection)
-- "We liked X, what's similar in our library?"
-- Natural language search: "That Korean thriller we downloaded last year"
-
-**Recommendation:** Install Plex or Jellyfin first. Only build a Jarvis
-layer on top if the built-in browsing/search isn't sufficient. This is
-a separate project from Jarvis core — don't let it distract from Spikes 1-4.
-
-### Consolidation Thought
-
-The various document collections (documents, car records, career files, financial records, university materials)
-suggest a broader personal information architecture question: should these
-all live under one indexed root, or stay separate? Not a decision needed
-now, but worth thinking about when Phase 4 is working.
+Moved to `docs/jarvis-ideas.md`. That file covers prioritised ideas across file management,
+automation, hardware (Mac mini M5 Pro), and future capabilities — with effort/value scoring
+and a suggested sequencing given time constraints.
