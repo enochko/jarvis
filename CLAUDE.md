@@ -153,6 +153,7 @@ Always flag these explicitly when suggesting code or tasks:
 - Keep the agent engine stateless per request; persist state to Obsidian files
 - Check `docs/scope.md` open questions before implementing new integrations
 - Use Gemini for bulk/research tasks to preserve Claude quota
+- When producing files for the repo, always append `git add` and `git commit` commands at the end of the response, using chained `-m` flags for multi-line commits
 
 ## DON'T
 
