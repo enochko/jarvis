@@ -1,9 +1,9 @@
 # CLAUDE.md — Project Jarvis
 
 **Repo:** jarvis  
-**Last updated:** March 2026  
+**Last updated:** March 2026 (v0.3)  
 **Maintained by:** Enoch Ko  
-**Version:** 0.2
+**Version:** 0.3
 
 ---
 
@@ -89,6 +89,7 @@ collections are processed via Ollama only — never routed through cloud LLMs.
 | BR-008 | Finance, health, and personal documents: Ollama/local pipeline only. No cloud LLM. |
 | BR-009 | Obsidian outputs must be valid Markdown with YAML frontmatter (`date created`, `source: jarvis`). |
 | BR-010 | Context injection is bounded: ~1-2KB facts + recent summaries. Never send the full vault. |
+| BR-011 | External media drives are read-only for all Jarvis operations. The agent produces reports and staging copies only; it never writes to or deletes from source media drives directly. |
 
 ---
 
@@ -212,3 +213,4 @@ Exception: "program" not "programme" for software contexts.
 |---|---|---|---|
 | 2026-02-18 | 0.1 | Initial CLAUDE.md | Claude |
 | 2026-03-08 | 0.2 | Restructured: added invariants/BR table, DO/DON'T, LLM routing table, current dev state; aligned with MusicElo CLAUDE.md structure | Claude |
+| 2026-03-11 | 0.3 | Added BR-011: external media drives read-only | Claude |
