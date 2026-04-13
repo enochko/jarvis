@@ -14,6 +14,7 @@ jarvis-logs/
 token.json
 credentials.json
 client_secret*.json
+*.plist
 
 # Python
 __pycache__/
