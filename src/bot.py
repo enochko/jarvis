@@ -5,6 +5,8 @@ Thin client — all logic lives in the agent engine.
 """
 
 import logging
+from logging.handlers import RotatingFileHandler
+
 import os
 from datetime import datetime
 from pathlib import Path
@@ -29,14 +31,30 @@ LOG_DIR = Path("~/Obsidian/aaa-claude/jarvis-logs").expanduser()
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 log_file = LOG_DIR / f"bot_{datetime.now().strftime('%Y%m%d')}.log"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)-7s | %(message)s",
-    handlers=[
-        logging.FileHandler(log_file, encoding="utf-8"),
-        logging.StreamHandler(),
-    ],
+file_handler = RotatingFileHandler(
+    log_file,
+    maxBytes=5 * 1024 * 1024,   # 5MB per file
+    backupCount=3,               # keep .log, .log.1, .log.2, .log.3
+    encoding="utf-8",
 )
+file_handler.setFormatter(logging.Formatter(
+    "%(asctime)s | %(levelname)-7s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+))
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter(
+    "%(asctime)s | %(levelname)-7s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+))
+
+logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, stream_handler])
+
+# Suppress noisy internals
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+
 logger = logging.getLogger("bot")
 
 
