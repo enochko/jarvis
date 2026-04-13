@@ -1,8 +1,8 @@
 # Project Jarvis: Personal AI Assistant
 
 **Codename: Jarvis  
-**Status:** Scoping → Spike 1  
-**Date:** 2026-02-18  
+**Status:** Spike 1 complete → Spike 2 active  
+**Date:** 2026-02-18 (updated 2026-04-14)  
 **Author:** [Your Name]  
 
 ---
@@ -172,37 +172,26 @@ Other references:
 
 | Component | Detail |
 |-----------|--------|
-| Hot cache | `jarvis-memory/hot.md` — compact end-of-session summary; read at next session start |
-| Facts file | `jarvis-memory/facts.md` — persistent facts via `/remember` command; always injected as context |
-| Context injection | Prepend `facts.md` + `hot.md` to each `claude -p` call (~1-2KB total) |
-| `/remember` command | Appends to `facts.md` |
-| Vault CLAUDE.md | Vault-root `CLAUDE.md` (separate from repo) instructs Claude Code to read/write hot cache on session start/end |
-| mcp-obsidian | Evaluate as vault retrieval layer before committing to LlamaIndex for vault search (see Phase 4 note) |
+| Conversation log | Each session → markdown in `jarvis-memory/` |
+| Context injection | Prepend relevant memory to each `claude -p` call (~1-2KB, not whole vault) |
+| Memory index | Simple: last N conversations + facts file |
+| `/remember` command | Appends to persistent facts file |
+| Facts file | `jarvis-memory/facts.md` — always injected as context |
 
-**Revised from original plan:** Full conversation transcript logging is deprioritised
-in favour of the hot cache pattern. The hot cache is more signal-dense — Claude writes
-only what's worth carrying forward, not a full transcript. This is simpler to implement
-and cheaper to inject as context.
-
-**Token cost is small.** Context injection sends ~1-2KB (facts + hot cache summary),
-not your whole vault. Full vault search is Phase 4, which retrieves only 5-10 relevant
-chunks per query.
-
-**Pre-Spike 2 quick win:** Create the vault-level `CLAUDE.md` and `hot.md` convention
-now (before Spike 1 is complete) — it has zero dependencies and immediately improves
-interactive Claude Code sessions. See `jarvis-ideas.md` Idea 13.
+**Token cost is small.** Context injection sends ~1-2KB (facts + recent
+conversation summaries), not your whole vault. Full vault search is Phase 4
+(LlamaIndex), which retrieves only 5-10 relevant chunks per query.
 
 File structure:
 ```
 ~/Obsidian/aaa-claude/
-├── CLAUDE.md                   # Vault-level context for Claude Code interactive sessions
 ├── jarvis-memory/
 │   ├── facts.md                # Persistent facts (/remember commands)
-│   ├── hot.md                  # Hot cache: compact summary updated each session
+│   ├── 2026-02-18_session1.md  # Conversation logs
 │   └── ...
 ├── claude-inbox/               # Batch tasks (orchestrator)
 ├── claude-outbox/              # Completed outputs
-└── jarvis-logs/                # System logs
+└── jarvis-logs/                  # System logs
 ```
 
 ### Phase 3: Google Services via MCP
@@ -234,13 +223,6 @@ vault (not in Obsidian, not in git).
 **Goal:** "What did my notes say about X?" across your entire 108MB vault.  
 **Effort:** 2-3 weekends  
 **Dependencies:** Phase 2 working, Ollama installed
-
-**Re-evaluate scope before starting:** The `mcp-obsidian` MCP server (set up during
-Phase 2) may cover the vault Q&A use case without embeddings, using the Karpathy LLM
-wiki pattern (well-structured markdown + hot cache, no vector DB). Assess its retrieval
-quality on real queries before committing to LlamaIndex for the vault. LlamaIndex is
-still the right tool for large non-vault collections (Paperless archive, 47GB PDFs)
-where volume genuinely requires vector retrieval.
 
 **Why not just send files to Claude?**
 Your vault is 108.5MB / 1,643 files. Claude's context window can't hold it.
@@ -717,19 +699,20 @@ subscription already and want multi-provider redundancy.
 
 ### Spike 1: Telegram ↔ Claude (1-2 weekends)
 
-- [ ] Create Telegram bot via @BotFather → save token as env var
-- [ ] Get Telegram user ID via @userinfobot
-- [ ] Set env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ALLOWED_USERS`
-- [ ] Clone/fork `seedprod/claude-code-telegram`
-- [ ] Get basic send → receive loop working
-- [ ] Test from phone: send message, receive Claude response
-- [ ] Set up `launchd` plist for auto-start on boot
+- [x] Create Telegram bot via @BotFather → save token as env var
+- [x] Get Telegram user ID via @userinfobot
+- [x] Set env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`
+- [x] Build agent engine (`src/agent.py`) — FastAPI on localhost:8000, `claude -p` execution
+- [x] Build Telegram bot (`src/bot.py`) — thin client, auth guard, chunked responses
+- [x] Get basic send → receive loop working
+- [x] Test from phone: send message, receive Claude response
+- [x] Set up `launchd` plists for auto-start on boot (both agent and bot)
 - [ ] Add `/usage` command (ccusage or OAuth API)
 - [ ] Write spike retrospective in Obsidian
 
 ### Spike 2: Memory + Obsidian (1 weekend)
 
-- [ ] Create `~/Obsidian/aaa-claude/jarvis-memory/` directory
+- [x] Create `~/Obsidian/aaa-claude/jarvis-memory/` directory
 - [ ] Create `facts.md` for persistent facts
 - [ ] Implement conversation logging (session → markdown)
 - [ ] Implement context injection (facts + recent history → prompt prefix)
