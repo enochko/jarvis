@@ -1,6 +1,6 @@
 ---
 date created: 2026-03-08
-date modified: 2026-03-08
+date modified: 2026-04-14
 tags: [jarvis, ideas, backlog]
 ---
 
@@ -202,6 +202,40 @@ Claude.ai component (e.g. interactive Q&A) are marked **[Both]**.
 
 ---
 
+### 13. Vault-level CLAUDE.md + hot cache (MBP) — [Jarvis]
+**What**: A `CLAUDE.md` at the Obsidian vault root (separate from the repo `CLAUDE.md`) that instructs Claude Code how to navigate the vault during interactive sessions. Paired with a `jarvis-memory/hot.md` hot cache: at the end of each interactive Claude Code session, Claude writes a compact summary of what was discussed and changed; at the start of the next session, it reads that file first. Session continuity without full conversation logging.
+
+**Why Jarvis**: Runtime convention for Claude Code interactive use. Not a Telegram feature — this governs the vault-as-second-brain workflow when you run `claude` in the terminal from inside `~/Obsidian/aaa-claude/`.
+
+**Why it matters**: Eliminates context-rebuilding at the start of every session. You never have to re-explain where things are or what you were working on. The hot cache is simpler and more signal-dense than logging full conversation transcripts (Spike 2's original plan), because Claude writes only what's worth carrying forward.
+
+**Relationship to Spike 2**: This partially replaces the conversation logging component of Spike 2. `facts.md` (persistent facts via `/remember`) stays as planned. Full session transcripts are deprioritised in favour of the hot cache pattern.
+
+**Vault CLAUDE.md should cover**: vault folder structure and conventions, `.claudeignore` locations, `write_dirs` equivalent for interactive use, instruction to read `hot.md` on session start and update it on session end, pointer to `facts.md` for persistent facts.
+
+**Overnight risk**: Low. Hot cache is a single small file, always overwritten. Idempotent.
+
+**Dependencies**: None beyond Claude Code being installed. Implement before or during Spike 2.
+
+---
+
+### 14. mcp-obsidian vault server (MBP) — [Jarvis]
+**What**: Install the `mcp-obsidian` MCP server (via Smithery or the Obsidian Local REST API plugin) to give Claude Code proper vault-aware access: full-text fuzzy search, backlink traversal, read/write with frontmatter support, works even when Obsidian is closed.
+
+**Why Jarvis**: Replaces raw filesystem grep with vault-native search. Both Claude Code interactive sessions and Jarvis's Telegram agent benefit — the MCP server becomes the retrieval layer for vault queries.
+
+**Why it matters**: Raw `grep` and `find` on the vault work but don't understand Obsidian structure (backlinks, tags, frontmatter queries). The MCP server does. This is materially better for the "what did I write about X?" use case. It also partially covers the Phase 4 LlamaIndex use case for the Obsidian vault specifically — LlamaIndex remains justified for the Paperless archive (47GB PDFs) but may be overkill for the vault itself.
+
+**Relationship to Phase 4**: Evaluate `mcp-obsidian` search quality before committing to LlamaIndex for vault retrieval. The Karpathy LLM wiki pattern (structured markdown, no embeddings) may cover 80% of vault Q&A with far less infrastructure. LlamaIndex remains the right tool for Paperless and other large non-vault document collections.
+
+**Setup**: Install Obsidian Local REST API plugin → configure MCP server in Claude Code's `~/.claude/mcp.json` → test with `claude mcp list`.
+
+**Overnight risk**: None. Read-mostly; write operations still governed by `write_dirs`.
+
+**Dependencies**: Spike 1 complete (so MCP config pattern is established). Can be done independently in parallel.
+
+---
+
 ## Hardware considerations
 
 | Idea | Works on MBP now | Needs Mac mini | Needs 64GB vision model |
@@ -217,15 +251,18 @@ Claude.ai component (e.g. interactive Q&A) are marked **[Both]**.
 | Document archive RAG | — | ✓ | — |
 | Receipt → daily notes | — | ✓ | — |
 | Plex + Jarvis layer | — | ✓ | — |
+| Vault CLAUDE.md + hot cache | ✓ | — | — |
+| mcp-obsidian vault server | ✓ | — | — |
 
 ---
 
 ## Suggested sequencing given time constraints
 
 1. **Finish Spike 1** (Telegram ↔ Claude) — everything else depends on this.
-2. **Spike 2** (memory/logging) — needed for periodic notes and Korean agent.
-3. **Periodic notes** (Idea 1) — highest recurring ROI, unlocks after Spike 2 + Calendar MCP.
-4. **Movie/TV organiser** (Idea 3) — self-contained, Mac mini task, clear win once hardware arrives.
-5. **Study support** (Idea 4) — use Claude.ai Projects now; revisit after Phase 4 RAG.
-6. **Photo metadata pipeline** (Idea 5, metadata pass only) — start this before Mac mini; vision pass deferred.
-7. **Everything else** — after Mac mini arrives and core spikes are stable.
+2. **Vault CLAUDE.md + hot cache** (Idea 13) — can be done now, zero dependencies, immediate benefit for interactive Claude Code use.
+3. **Spike 2** (memory/logging) — hot cache replaces full conversation logging; focus on `facts.md` + `/remember` command + `mcp-obsidian` (Idea 14).
+4. **Periodic notes** (Idea 1) — highest recurring ROI, unlocks after Spike 2 + Calendar MCP.
+5. **Movie/TV organiser** (Idea 3) — self-contained, Mac mini task, clear win once hardware arrives.
+6. **Study support** (Idea 4) — use Claude.ai Projects now; revisit after Phase 4 RAG.
+7. **Photo metadata pipeline** (Idea 5, metadata pass only) — start this before Mac mini; vision pass deferred.
+8. **Everything else** — after Mac mini arrives and core spikes are stable.
