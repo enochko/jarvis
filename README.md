@@ -62,8 +62,31 @@ The agent engine is a **separate local API service** — channels are thin clien
 
 ## What's in This Repo
 
+### `jarvis/`
+The Python package containing all service code.
+
+**`jarvis/agent.py`** — FastAPI agent engine on `localhost:8000`. All LLM execution lives here. Channels are thin clients that call this service. Features:
+- `claude -p` subprocess execution with async wrapper (event loop stays unblocked)
+- Shared secret auth on `/message` endpoint (`JARVIS_AGENT_SECRET`)
+- Hard-block prompt injection detection (6 patterns, raises HTTP 400)
+- Write directory restrictions via prompt prefix (`JARVIS_WRITE_DIRS`)
+- Concurrent request semaphore (one `claude -p` subprocess at a time)
+- Graceful shutdown: terminates in-flight subprocesses on SIGTERM
+- No `Bash` tool — interactive path has no legitimate shell need
+
+**`jarvis/bot.py`** — Telegram bot thin client. Receives messages, forwards to agent engine, returns responses. Features:
+- Allowlist auth via `TELEGRAM_ALLOWED_USERS`
+- Persistent typing indicator (loops every 4s until agent responds)
+- Typed exception handling for agent calls (connect error, timeout, HTTP errors)
+- Telegram 4096-char chunking (line-aware)
+
+**`jarvis/logging_config.py`** — Shared logging setup. Both services call `configure_logging(name, log_dir)` rather than duplicating handler configuration. Rotating file handler (5MB, 3 backups) + stream handler. Suppresses noisy third-party loggers.
+
+### `run_agent.py` / `run_bot.py`
+Thin entry points for launchd plists and cron. Both are one-liners that import and call `main()` from the package. Reference these paths in your launchd plists, not the files inside `jarvis/`.
+
 ### `claude_orchestrator.py`
-The centrepiece. Reads task definitions from an Obsidian-compatible Markdown file with YAML frontmatter, then executes them sequentially via Claude Code's headless mode (`-p`). Features:
+The batch task runner. Reads task definitions from an Obsidian-compatible Markdown file with YAML frontmatter, then executes them sequentially via Claude Code's headless mode (`-p`). Features:
 - Per-batch curfew window (stops retrying before morning to preserve daytime quota)
 - Quota retry with hourly backoff
 - Checkbox status updates in source file (`[ ]` → `[x]` or `[!]`)
@@ -100,9 +123,43 @@ Full project scope: vision, architecture decisions, LLM provider strategy, phase
 ```bash
 # Prerequisites
 npm install -g @anthropic-ai/claude-code   # requires Node.js 18+
-pip install pyyaml
+pip install pyyaml fastapi uvicorn python-telegram-bot httpx
+```
 
-# Run a single task headlessly
+**First-time setup — generate and store the agent secret:**
+
+`JARVIS_AGENT_SECRET` is a shared secret that authenticates the bot to the agent engine.
+Generate it once and store the same value in both launchd plists permanently — it must
+match across both services and survive restarts.
+
+```bash
+openssl rand -hex 32
+# Copy the output — e.g. a3f8c2e1d9b74f2e8c3a1b5d6e9f0c7a...
+# Paste this static value into both launchd plists (see launchd section below)
+```
+
+**Launchd plist `EnvironmentVariables` block (both plists get the same values):**
+
+```xml
+<key>EnvironmentVariables</key>
+<dict>
+    <key>TELEGRAM_BOT_TOKEN</key>
+    <string>your-bot-token-from-botfather</string>
+    <key>TELEGRAM_ALLOWED_USERS</key>
+    <string>your-telegram-user-id</string>
+    <key>JARVIS_AGENT_SECRET</key>
+    <string>paste-your-generated-secret-here</string>
+</dict>
+```
+
+```bash
+# Run the agent engine (or via launchd: see docs/scope.md)
+python run_agent.py
+
+# Run the Telegram bot (separate terminal or launchd service)
+python run_bot.py
+
+# Run a single task headlessly (orchestrator)
 claude -p "Read ~/notes/topic.md and write a report to ~/reports/output.md" --model sonnet
 
 # Run a batch of tasks from a file overnight

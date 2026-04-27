@@ -1,9 +1,9 @@
 # CLAUDE.md — Project Jarvis
 
 **Repo:** jarvis  
-**Last updated:** April 2026 (v0.4)  
+**Last updated:** March 2026 (v0.3)  
 **Maintained by:** Enoch Ko  
-**Version:** 0.4
+**Version:** 0.3
 
 ---
 
@@ -42,17 +42,19 @@ multi-provider LLM orchestration.
 ├── claude_orchestrator.py       ← Batch task runner (operational)
 ├── example-tasks.md             ← Sample task file with YAML frontmatter
 ├── README.md                    ← Project overview
-├── src/
-│   ├── agent.py                 ← FastAPI agent engine (localhost:8000)
-│   └── bot.py                   ← Telegram bot (thin client)
+├── run_agent.py                 ← Entry point: python run_agent.py (reference in launchd plist)
+├── run_bot.py                   ← Entry point: python run_bot.py (reference in launchd plist)
+├── jarvis/
+│   ├── __init__.py              ← Package init (version string)
+│   ├── agent.py                 ← FastAPI agent engine (LLM execution)
+│   ├── bot.py                   ← Telegram bot (thin channel client)
+│   └── logging_config.py        ← Shared logging setup (used by all services)
 ├── docs/
 │   ├── scope.md                 ← Architecture, phases, action items
 │   ├── jarvis-ideas.md          ← Ideas backlog with prioritisation
 │   └── claude-code-guide.md     ← Claude Code agent workflow reference
 └── templates/                   ← Prompt templates (01–08)
 ```
-
-**Note:** launchd plists (`~/Library/LaunchAgents/com.jarvis.*.plist`) are not in the repo — they contain credentials and machine-specific paths.
 
 ---
 
@@ -125,7 +127,9 @@ needs explicit retry logic with exponential backoff or hour-boundary waiting.
 Log quota errors, timeouts, and non-zero exit codes separately — they have
 different recovery paths.
 
-**Logging.** Python `logging` with `RotatingFileHandler` (5MB per file, 3 backups). File handler at DEBUG, stream handler at INFO. Suppress `httpx`, `telegram`, and `apscheduler` loggers to WARNING to avoid polling heartbeat noise. Log to `~/Obsidian/aaa-claude/jarvis-logs/` with `YYYYMMDD` filename prefix.
+**Logging.** Python `logging` with timestamps. File handler at DEBUG, stream
+handler at INFO. Log to `~/Obsidian/aaa-claude/jarvis-logs/` with
+`YYYYMMDD_HHMMSS` prefix.
 
 **Python style.** Type hints on all function signatures. `Path` over string
 paths. `Optional[X]` over `X | None` for 3.11 compatibility.
@@ -195,16 +199,15 @@ Exception: "program" not "programme" for software contexts.
 
 ## Current Development State
 
-- **Stage:** Spike 1 complete — moving to Spike 2 (persistent memory)
-- Agent engine (`src/agent.py`) running as launchd service on `localhost:8000`
-- Telegram bot (`src/bot.py`) running as launchd service, polling for messages
-- End-to-end flow confirmed: phone → Telegram → bot → agent engine → `claude -p` → response
+- **Stage:** Spike 1 — Telegram channel integration
+- `jarvis/agent.py` and `jarvis/bot.py` exist; security hardening applied (see v0.4 revision)
+- Spike goal: send a Telegram message, receive a Claude response
 
 | Phase | Status |
 |---|---|
 | 0: Batch orchestrator | Done ✅ |
-| 1: Telegram channel | Done ✅ |
-| 2: Persistent memory | Active |
+| 1: Telegram channel | Active |
+| 2: Persistent memory | Pending |
 | 3: Google services via MCP | Pending |
 | 4: LlamaIndex RAG | Pending |
 | 5: Proactive behaviours | Pending |
@@ -218,4 +221,4 @@ Exception: "program" not "programme" for software contexts.
 | 2026-02-18 | 0.1 | Initial CLAUDE.md | Claude |
 | 2026-03-08 | 0.2 | Restructured: added invariants/BR table, DO/DON'T, LLM routing table, current dev state; aligned with MusicElo CLAUDE.md structure | Claude |
 | 2026-03-11 | 0.3 | Added BR-011: external media drives read-only | Claude |
-| 2026-04-14 | 0.4 | Spike 1 complete: added src/ structure, updated logging convention (RotatingFileHandler), updated dev state | Claude |
+| 2026-04-14 | 0.4 | Restructured to `jarvis/` package; added `logging_config.py`, `run_agent.py`, `run_bot.py`; security hardening: removed Bash from agent allowed tools, added shared secret auth, hard-block prompt injection, env-var config, persistent typing indicator, concurrent request semaphore, graceful shutdown | Claude |
