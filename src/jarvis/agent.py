@@ -11,6 +11,7 @@ Environment variables:
     JARVIS_TASK_TIMEOUT    Subprocess timeout in seconds (default: 120)
     JARVIS_WRITE_DIRS      Comma-separated list of allowed write directories
     JARVIS_AGENT_SECRET    Shared secret for /message endpoint auth (optional but recommended)
+    JARVIS_LOG_DIR         Log directory (default: ~/Obsidian/aaa-claude/jarvis-logs)
 """
 
 import asyncio
@@ -27,11 +28,14 @@ import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
+from jarvis.helpers import is_quota_error
 from jarvis.logging_config import configure_logging
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-LOG_DIR = Path("~/Obsidian/aaa-claude/jarvis-logs").expanduser()
+LOG_DIR = Path(
+    os.environ.get("JARVIS_LOG_DIR", "~/Obsidian/aaa-claude/jarvis-logs")
+).expanduser()
 
 CLAUDE_PATH = shutil.which("claude") or os.environ.get("CLAUDE_PATH", "claude")
 
@@ -231,17 +235,9 @@ async def run_claude(prompt: str, model: str = DEFAULT_MODEL) -> dict:
             if err:
                 logger.debug(f"stderr: {err[:500]}")
 
-            quota_kw = [
-                "rate limit", "rate_limit", "429", "quota", "usage limit",
-                "too many requests", "capacity", "overloaded", "throttl",
-            ]
-            # Check stderr first (authoritative); only check stdout if stderr is clean.
-            # Avoids false positives when Claude's response text discusses rate limiting.
-            err_lower = err.lower()
-            out_lower = output.lower() if not err_lower.strip() else ""
-            is_quota = any(kw in err_lower or kw in out_lower for kw in quota_kw)
-
-            if is_quota:
+            # A successful run is never a quota error, even if the answer text
+            # mentions "quota" or "429" (see jarvis.helpers.is_quota_error).
+            if is_quota_error(err, output, proc.returncode):
                 logger.warning("Quota/rate-limit detected")
                 return {
                     "success": False,
@@ -254,6 +250,14 @@ async def run_claude(prompt: str, model: str = DEFAULT_MODEL) -> dict:
                 return {
                     "success": False,
                     "text": f"Agent error (exit {proc.returncode}). Check logs.",
+                    "duration_s": round(duration, 1),
+                }
+
+            if not output:
+                logger.warning("claude exited 0 but returned empty output")
+                return {
+                    "success": False,
+                    "text": "Agent returned an empty response. Try rephrasing.",
                     "duration_s": round(duration, 1),
                 }
 

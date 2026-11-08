@@ -27,6 +27,7 @@ from telegram.ext import (
     filters,
 )
 
+from jarvis.helpers import chunk_text
 from jarvis.logging_config import configure_logging
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -45,7 +46,9 @@ AGENT_URL = os.environ.get("JARVIS_AGENT_URL", "http://127.0.0.1:8000")
 
 AGENT_SECRET = os.environ.get("JARVIS_AGENT_SECRET", "")
 
-LOG_DIR = Path("~/Obsidian/aaa-claude/jarvis-logs").expanduser()
+LOG_DIR = Path(
+    os.environ.get("JARVIS_LOG_DIR", "~/Obsidian/aaa-claude/jarvis-logs")
+).expanduser()
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -102,23 +105,6 @@ async def _typing_loop(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None
 
 # ── Chunk helper (Telegram 4096 char limit) ───────────────────────────────────
 
-def chunk_text(text: str, max_len: int = 4000) -> list[str]:
-    if len(text) <= max_len:
-        return [text]
-    chunks: list[str] = []
-    current: list[str] = []
-    current_len = 0
-    for line in text.split("\n"):
-        if current_len + len(line) + 1 > max_len:
-            chunks.append("\n".join(current))
-            current, current_len = [], 0
-        current.append(line)
-        current_len += len(line) + 1
-    if current:
-        chunks.append("\n".join(current))
-    return chunks
-
-
 # ── Handlers ─────────────────────────────────────────────────────────────────
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -160,10 +146,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         typing_task.cancel()
         # suppress CancelledError from the typing task itself — expected cancellation path.
         # A CancelledError from the outer coroutine propagates normally past this block.
-        with contextlib.suppress(asyncio.CancelledError):
+        # Also swallow network errors from the typing loop so they can't mask the reply.
+        with contextlib.suppress(asyncio.CancelledError, Exception):
             await typing_task
 
-    for chunk in chunk_text(response):
+    chunks = chunk_text(response) or ["(empty response)"]
+    for chunk in chunks:
         await update.message.reply_text(chunk)
 
 

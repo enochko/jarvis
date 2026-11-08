@@ -42,18 +42,22 @@ multi-provider LLM orchestration.
 ├── claude_orchestrator.py       ← Batch task runner (operational)
 ├── example-tasks.md             ← Sample task file with YAML frontmatter
 ├── README.md                    ← Project overview
-├── run_agent.py                 ← Entry point: python run_agent.py (reference in launchd plist)
-├── run_bot.py                   ← Entry point: python run_bot.py (reference in launchd plist)
-├── jarvis/
-│   ├── __init__.py              ← Package init (version string)
-│   ├── agent.py                 ← FastAPI agent engine (LLM execution)
-│   ├── bot.py                   ← Telegram bot (thin channel client)
-│   └── logging_config.py        ← Shared logging setup (used by all services)
+├── requirements.txt             ← Python dependencies
+├── tests/                       ← Unit tests (pytest)
+├── src/
+│   ├── run_agent.py             ← Entry point: python src/run_agent.py (reference in launchd plist)
+│   ├── run_bot.py               ← Entry point: python src/run_bot.py (reference in launchd plist)
+│   └── jarvis/
+│       ├── __init__.py          ← Package init (version string)
+│       ├── agent.py             ← FastAPI agent engine (LLM execution)
+│       ├── bot.py               ← Telegram bot (thin channel client)
+│       ├── helpers.py           ← Dependency-free helpers (chunking, quota detection)
+│       └── logging_config.py    ← Shared logging setup (used by all services)
 ├── docs/
 │   ├── scope.md                 ← Architecture, phases, action items
 │   ├── jarvis-ideas.md          ← Ideas backlog with prioritisation
 │   └── claude-code-guide.md     ← Claude Code agent workflow reference
-└── templates/                   ← Prompt templates (01–08)
+└── templates/                   ← Prompt templates (01–06)
 ```
 
 ---
