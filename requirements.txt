@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+httpx
+python-telegram-bot
+pyyaml
+pytest
