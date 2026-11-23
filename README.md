@@ -118,7 +118,33 @@ Full project scope: vision, architecture decisions, LLM provider strategy, phase
 
 ---
 
-## Quick Start
+## Quick Start — Windows, no Python (Node.js edition)
+
+`node/` is a dependency-free Node.js port of the agent engine and the Telegram bot,
+plus a local web chat and a terminal chat. It needs only Node.js 20+ and Claude Code,
+with no Python, no conda and no `npm install`.
+
+1. Log in to the Claude CLI once: run `claude` in a terminal, then `/login`.
+2. Double-click `start-jarvis.cmd`. The agent starts on `127.0.0.1:8000` and the web chat
+   opens at `http://127.0.0.1:3000`.
+3. Optional: `start-jarvis.cmd --cli` chats in the terminal instead of the browser.
+4. Optional Telegram: copy `.env.example` to `.env` and set `TELEGRAM_BOT_TOKEN` and
+   `TELEGRAM_ALLOWED_USERS`. The bot starts with the launcher whenever a token is set, and
+   refuses to start without an allowlist.
+
+If `JARVIS_AGENT_SECRET` is not set, the launcher generates a random one per run and shares it
+in-process with the channels, so the agent never runs unauthenticated. Logs go to
+`~/Obsidian/aaa-claude/jarvis-logs/` by default (override with `JARVIS_LOG_DIR`).
+
+| File | Role |
+|---|---|
+| `node/agent.mjs` | Agent engine (`/health`, `/message`). Same behaviour as `jarvis/agent.py` |
+| `node/bot.mjs` | Telegram thin client (long polling over the Bot API) |
+| `node/web.mjs` + `node/public/index.html` | Local web chat; adds the secret server-side, rejects cross-origin and rebinding requests |
+| `node/start.mjs` | Launcher for agent + channels (`--cli`, `--no-browser`) |
+| `node/lib/` | Config/.env loading, logging, HTTP helpers, agent client |
+
+## Quick Start — macOS (Python edition)
 
 ```bash
 # Prerequisites
@@ -234,9 +260,9 @@ See `docs/scope.md` for detailed phase plans.
 
 ## Requirements
 
-- macOS or Linux (Windows via WSL)
+- Node.js edition: Windows, macOS or Linux with Node.js 20+ (no Python)
+- Python edition: macOS or Linux (Windows via WSL), Python 3.11+
 - Node.js 18+ (for Claude Code)
-- Python 3.11+
 - Claude Pro or Max subscription
 - `pip install pyyaml`
 - Obsidian (optional, but the workflow is designed around it)

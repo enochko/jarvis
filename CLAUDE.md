@@ -30,6 +30,7 @@ multi-provider LLM orchestration.
 | Memory / knowledge | Obsidian vault (Markdown files) |
 | Document retrieval | LlamaIndex, FAISS, Ollama (`nomic-embed-text` embeddings) |
 | Runtime | Conda env `jarvis`; Node.js via Homebrew for CLI tools |
+| Node.js edition | `node/` — dependency-free port (agent, Telegram, web chat, CLI) for Windows without Python; Node 20+ |
 | Daemon | `launchd` plist on macOS |
 
 ---
@@ -53,6 +54,14 @@ multi-provider LLM orchestration.
 │   ├── scope.md                 ← Architecture, phases, action items
 │   ├── jarvis-ideas.md          ← Ideas backlog with prioritisation
 │   └── claude-code-guide.md     ← Claude Code agent workflow reference
+├── start-jarvis.cmd             ← Windows launcher for the Node.js edition
+├── node/                        ← Node.js edition (no Python, no npm deps)
+│   ├── agent.mjs                ← Agent engine (port of jarvis/agent.py)
+│   ├── bot.mjs                  ← Telegram bot (port of jarvis/bot.py)
+│   ├── web.mjs                  ← Local web chat channel (127.0.0.1:3000)
+│   ├── start.mjs                ← Launcher: agent + all channels
+│   ├── public/index.html        ← Web chat page
+│   └── lib/                     ← config, logger, http helpers, agent client
 └── templates/                   ← Prompt templates (01–08)
 ```
 
@@ -202,6 +211,7 @@ Exception: "program" not "programme" for software contexts.
 - **Stage:** Spike 1 — Telegram channel integration
 - `jarvis/agent.py` and `jarvis/bot.py` exist; security hardening applied (see v0.4 revision)
 - Spike goal: send a Telegram message, receive a Claude response
+- Node.js edition in `node/` mirrors the Python services; keep both in sync until one is retired
 
 | Phase | Status |
 |---|---|
@@ -222,3 +232,4 @@ Exception: "program" not "programme" for software contexts.
 | 2026-03-08 | 0.2 | Restructured: added invariants/BR table, DO/DON'T, LLM routing table, current dev state; aligned with MusicElo CLAUDE.md structure | Claude |
 | 2026-03-11 | 0.3 | Added BR-011: external media drives read-only | Claude |
 | 2026-04-14 | 0.4 | Restructured to `jarvis/` package; added `logging_config.py`, `run_agent.py`, `run_bot.py`; security hardening: removed Bash from agent allowed tools, added shared secret auth, hard-block prompt injection, env-var config, persistent typing indicator, concurrent request semaphore, graceful shutdown | Claude |
+| 2026-11-23 | 0.5 | Added Node.js edition (`node/`, `start-jarvis.cmd`): agent, Telegram bot, local web chat and CLI without Python | Claude |
